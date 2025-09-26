@@ -199,7 +199,7 @@ class _TrimViewerState extends State<TrimViewer> with TickerProviderStateMixin {
     widget.trimmer.eventStream.listen((event) {
       if (event == TrimmerEvent.initialized) {
         final totalDuration =
-            widget.trimmer.videoPlayerController!.value.duration;
+            widget.trimmer.videoPlayerController!.player.state.duration;
         final maxVideoLength = widget.maxVideoLength;
         final paddingFraction = widget.paddingFraction;
         final trimAreaDuration = Duration(

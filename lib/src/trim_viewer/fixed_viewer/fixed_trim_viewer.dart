@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+
 import 'package:video_trimmer/src/trim_viewer/trim_editor_painter.dart';
 import 'package:video_trimmer/src/trimmer.dart';
 import 'package:video_trimmer/src/utils/duration_style.dart';
@@ -170,7 +171,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
 
   /// Quick access to VideoPlayerController, only not null after [TrimmerEvent.initialized]
   /// has been emitted.
-  VideoPlayerController get videoPlayerController =>
+  VideoController get videoPlayerController =>
       widget.trimmer.videoPlayerController!;
 
   /// Keep track of the drag type, e.g. whether the user drags the left, center or
@@ -197,7 +198,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       if (trimmerActualWidth == null) return;
       _thumbnailViewerW = trimmerActualWidth;
       _initializeVideoController();
-      videoPlayerController.seekTo(const Duration(milliseconds: 0));
+      videoPlayerController.player.seek(const Duration(milliseconds: 0));
       _numberOfThumbnails = trimmerActualWidth ~/ _thumbnailViewerH;
       log('numberOfThumbnails: $_numberOfThumbnails');
       log('thumbnailViewerW: $_thumbnailViewerW');
@@ -214,7 +215,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
           onThumbnailLoadingComplete: widget.onThumbnailLoadingComplete,
         );
         this.thumbnailWidget = thumbnailWidget;
-        Duration totalDuration = videoPlayerController.value.duration;
+        Duration totalDuration = videoPlayerController.player.state.duration;
 
         if (widget.maxVideoLength > const Duration(milliseconds: 0) &&
             widget.maxVideoLength < totalDuration) {
@@ -262,17 +263,16 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
 
   Future<void> _initializeVideoController() async {
     if (_videoFile != null) {
-      videoPlayerController.addListener(() {
-        final bool isPlaying = videoPlayerController.value.isPlaying;
+      videoPlayerController.player.stream.position.listen((pos) {
+        final bool isPlaying = videoPlayerController.player.state.playing;
 
         if (isPlaying) {
           widget.onChangePlaybackState!(true);
           setState(() {
-            _currentPosition =
-                videoPlayerController.value.position.inMilliseconds;
+            _currentPosition = pos.inMilliseconds;
 
             if (_currentPosition > _videoEndPos.toInt()) {
-              videoPlayerController.pause();
+              videoPlayerController.player.pause();
               widget.onChangePlaybackState!(false);
               _animationController!.stop();
             } else {
@@ -283,21 +283,20 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
             }
           });
         } else {
-          if (videoPlayerController.value.isInitialized) {
-            if (_animationController != null) {
-              if ((_scrubberAnimation?.value ?? 0).toInt() ==
-                  (_endPos.dx).toInt()) {
-                _animationController!.reset();
-              }
-              _animationController!.stop();
-              widget.onChangePlaybackState!(false);
+          if (_animationController != null) {
+            if ((_scrubberAnimation?.value ?? 0).toInt() ==
+                (_endPos.dx).toInt()) {
+              _animationController!.reset();
             }
+            _animationController!.stop();
+            widget.onChangePlaybackState!(false);
           }
         }
       });
 
-      videoPlayerController.setVolume(1.0);
-      _videoDuration = videoPlayerController.value.duration.inMilliseconds;
+      videoPlayerController.player.setVolume(1.0);
+      _videoDuration =
+          videoPlayerController.player.state.duration.inMilliseconds;
     }
   }
 
@@ -397,22 +396,22 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       _startCircleSize = widget.editorProperties.circleSize;
       _endCircleSize = widget.editorProperties.circleSize;
       if (_dragType == EditorDragType.right) {
-        videoPlayerController
-            .seekTo(Duration(milliseconds: _videoEndPos.toInt()));
+        videoPlayerController.player
+            .seek(Duration(milliseconds: _videoEndPos.toInt()));
       } else {
-        videoPlayerController
-            .seekTo(Duration(milliseconds: _videoStartPos.toInt()));
+        videoPlayerController.player
+            .seek(Duration(milliseconds: _videoStartPos.toInt()));
       }
     });
   }
 
   @override
   void dispose() {
-    videoPlayerController.pause();
+    videoPlayerController.player.pause();
     widget.onChangePlaybackState!(false);
     if (_videoFile != null) {
-      videoPlayerController.setVolume(0.0);
-      videoPlayerController.dispose();
+      videoPlayerController.player.setVolume(0.0);
+      videoPlayerController.player.dispose();
       widget.onChangePlaybackState!(false);
     }
     super.dispose();
@@ -441,7 +440,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
                               .format(widget.durationStyle),
                           style: widget.durationTextStyle,
                         ),
-                        videoPlayerController.value.isPlaying
+                        videoPlayerController.player.state.playing
                             ? Text(
                                 Duration(milliseconds: _currentPosition.toInt())
                                     .format(widget.durationStyle),

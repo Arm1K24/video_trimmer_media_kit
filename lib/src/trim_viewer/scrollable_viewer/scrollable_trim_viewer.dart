@@ -5,7 +5,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+
 import 'package:video_trimmer/src/trim_viewer/trim_editor_painter.dart';
 import 'package:video_trimmer/src/trim_viewer/trim_area_properties.dart';
 import 'package:video_trimmer/src/trim_viewer/trim_editor_properties.dart';
@@ -184,7 +185,7 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
 
   /// Quick access to VideoPlayerController, only not null after [TrimmerEvent.initialized]
   /// has been emitted.
-  VideoPlayerController get videoPlayerController =>
+  VideoController get videoPlayerController =>
       widget.trimmer.videoPlayerController!;
 
   /// Keep track of the drag type, e.g. whether the user drags the left, center or
@@ -296,9 +297,9 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
       _thumbnailViewerW = trimmerActualWidth;
       _initializeVideoController();
       // The video has been initialized, now we can load stuff
-      videoPlayerController.seekTo(const Duration(milliseconds: 0));
+      videoPlayerController.player.seek(const Duration(milliseconds: 0));
       setState(() {
-        final totalDuration = videoPlayerController.value.duration;
+        final totalDuration = videoPlayerController.player.state.duration;
         log('Total Video Length: $totalDuration');
         final maxVideoLength = widget.maxVideoLength;
         log('Max Video Length: $maxVideoLength');
@@ -391,17 +392,16 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
 
   Future<void> _initializeVideoController() async {
     if (_videoFile == null) return;
-    videoPlayerController.addListener(() {
-      final bool isPlaying = videoPlayerController.value.isPlaying;
+    videoPlayerController.player.stream.position.listen((pos) {
+      final bool isPlaying = videoPlayerController.player.state.playing;
 
       if (isPlaying) {
         widget.onChangePlaybackState!(true);
         setState(() {
-          _currentPosition =
-              videoPlayerController.value.position.inMilliseconds;
+          _currentPosition = pos.inMilliseconds;
 
           if (_currentPosition > _videoEndPos.toInt()) {
-            videoPlayerController.pause();
+            videoPlayerController.player.pause();
             widget.onChangePlaybackState!(false);
             _animationController!.stop();
           } else {
@@ -412,21 +412,19 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
           }
         });
       } else {
-        if (videoPlayerController.value.isInitialized) {
-          if (_animationController != null) {
-            if ((_scrubberAnimation?.value ?? 0).toInt() ==
-                (_endPos.dx).toInt()) {
-              _animationController!.reset();
-            }
-            _animationController!.stop();
-            widget.onChangePlaybackState!(false);
+        if (_animationController != null) {
+          if ((_scrubberAnimation?.value ?? 0).toInt() ==
+              (_endPos.dx).toInt()) {
+            _animationController!.reset();
           }
+          _animationController!.stop();
+          widget.onChangePlaybackState!(false);
         }
       }
     });
 
-    videoPlayerController.setVolume(1.0);
-    _videoDuration = videoPlayerController.value.duration.inMilliseconds;
+    videoPlayerController.player.setVolume(1.0);
+    _videoDuration = videoPlayerController.player.state.duration.inMilliseconds;
   }
 
   /// Called when the user starts dragging the frame, on either side on the whole frame.
@@ -550,25 +548,25 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
       _startCircleSize = widget.editorProperties.circleSize;
       _endCircleSize = widget.editorProperties.circleSize;
       if (_dragType == EditorDragType.right) {
-        videoPlayerController
-            .seekTo(Duration(milliseconds: _videoEndPos.toInt()));
+        videoPlayerController.player
+            .seek(Duration(milliseconds: _videoEndPos.toInt()));
       } else {
-        videoPlayerController
-            .seekTo(Duration(milliseconds: _videoStartPos.toInt()));
+        videoPlayerController.player
+            .seek(Duration(milliseconds: _videoStartPos.toInt()));
       }
     });
   }
 
   @override
   void dispose() {
-    videoPlayerController.pause();
+    videoPlayerController.player.pause();
     _scrollController.dispose();
     _scrollStartTimer?.cancel();
     _scrollingTimer?.cancel();
     widget.onChangePlaybackState!(false);
     if (_videoFile != null) {
-      videoPlayerController.setVolume(0.0);
-      videoPlayerController.dispose();
+      videoPlayerController.player.setVolume(0.0);
+      videoPlayerController.player.dispose();
       widget.onChangePlaybackState!(false);
     }
     super.dispose();
@@ -597,7 +595,7 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
                               .format(widget.durationStyle),
                           style: widget.durationTextStyle,
                         ),
-                        videoPlayerController.value.isPlaying
+                        videoPlayerController.player.state.playing
                             ? Text(
                                 Duration(milliseconds: _currentPosition.toInt())
                                     .format(widget.durationStyle),

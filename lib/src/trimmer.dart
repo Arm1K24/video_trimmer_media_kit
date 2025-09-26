@@ -5,12 +5,14 @@ import 'package:image/image.dart' as img;
 import 'package:flutter_native_video_trimmer/flutter_native_video_trimmer.dart';
 import 'package:get_thumbnail_video/index.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:path/path.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:video_player/video_player.dart';
+
 import 'package:video_trimmer/src/utils/storage_dir.dart';
 
 enum OutputType { video, gif }
@@ -27,11 +29,15 @@ class Trimmer {
   final StreamController<TrimmerEvent> _controller =
       StreamController<TrimmerEvent>.broadcast();
 
-  VideoPlayerController? _videoPlayerController;
+  VideoController? _videoPlayerController;
 
-  VideoPlayerController? get videoPlayerController => _videoPlayerController;
+  VideoController? get videoPlayerController => _videoPlayerController;
+
+  final ValueNotifier<bool> playingNotifier = ValueNotifier(false);
 
   File? currentVideoFile;
+
+  Player player = Player();
 
   final _videoTrimmer = VideoTrimmer();
 
@@ -44,10 +50,13 @@ class Trimmer {
   Future<void> loadVideo({required File videoFile}) async {
     currentVideoFile = videoFile;
     if (videoFile.existsSync()) {
-      _videoPlayerController = VideoPlayerController.file(currentVideoFile!);
-      await _videoPlayerController!.initialize().then((_) {
-        _controller.add(TrimmerEvent.initialized);
+      player = Player();
+      await player.open(Media(currentVideoFile!.path));
+      _videoPlayerController = VideoController(player);
+      player.stream.playing.listen((playing) {
+        playingNotifier.value = playing;
       });
+      _controller.add(TrimmerEvent.initialized);
     }
   }
 
@@ -346,18 +355,16 @@ class Trimmer {
     required double startValue,
     required double endValue,
   }) async {
-    if (videoPlayerController!.value.isPlaying) {
-      await videoPlayerController!.pause();
+    if (playingNotifier.value) {
+      await player.pause();
       return false;
     } else {
-      if (videoPlayerController!.value.position.inMilliseconds >=
-          endValue.toInt()) {
-        await videoPlayerController!
-            .seekTo(Duration(milliseconds: startValue.toInt()));
-        await videoPlayerController!.play();
+      if (player.state.position.inMilliseconds >= endValue.toInt()) {
+        await player.seek(Duration(milliseconds: startValue.toInt()));
+        await player.play();
         return true;
       } else {
-        await videoPlayerController!.play();
+        await player.play();
         return true;
       }
     }

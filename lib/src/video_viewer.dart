@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 import 'trimmer.dart';
 
@@ -50,7 +50,7 @@ class VideoViewer extends StatefulWidget {
 class _VideoViewerState extends State<VideoViewer> {
   /// Quick access to VideoPlayerController, only not null after [TrimmerEvent.initialized]
   /// has been emitted.
-  VideoPlayerController? get videoPlayerController =>
+  VideoController? get videoPlayerController =>
       widget.trimmer.videoPlayerController;
 
   @override
@@ -73,23 +73,31 @@ class _VideoViewerState extends State<VideoViewer> {
             padding: const EdgeInsets.all(0.0),
             child: Center(
               child: AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: controller.value.isInitialized
-                    ? Container(
-                        foregroundDecoration: BoxDecoration(
-                          border: Border.all(
-                            width: widget.borderWidth,
-                            color: widget.borderColor,
-                          ),
-                        ),
-                        child: VideoPlayer(controller),
-                      )
-                    : const Center(
-                        child: CircularProgressIndicator(
-                          backgroundColor: Colors.white,
-                        ),
+                  aspectRatio: Size(
+                          controller.player.state.videoParams.w?.toDouble() ??
+                              720,
+                          controller.player.state.videoParams.h?.toDouble() ??
+                              720)
+                      .aspectRatio,
+                  child: Container(
+                    foregroundDecoration: BoxDecoration(
+                      border: Border.all(
+                        width: widget.borderWidth,
+                        color: widget.borderColor,
                       ),
-              ),
+                    ),
+                    child: Video(
+                      fill: Colors.black,
+                      controller: controller,
+                      controls: null,
+                      //     (s) => MaterialVideoControlsImpl(
+                      //   s,
+                      //   controller: this,
+                      // ),
+                      resumeUponEnteringForegroundMode: false,
+                      filterQuality: FilterQuality.high,
+                    ),
+                  )),
             ),
           );
   }
