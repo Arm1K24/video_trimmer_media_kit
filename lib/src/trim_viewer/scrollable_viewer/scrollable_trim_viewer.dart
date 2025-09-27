@@ -76,6 +76,8 @@ class ScrollableTrimViewer extends StatefulWidget {
 
   final VoidCallback onThumbnailLoadingComplete;
 
+  final Duration totalDuration;
+
   /// Widget for displaying the video trimmer.
   ///
   /// This has frame wise preview of the video with a
@@ -127,6 +129,7 @@ class ScrollableTrimViewer extends StatefulWidget {
     this.viewerWidth = 50 * 8,
     this.viewerHeight = 50,
     this.showDuration = true,
+    required this.totalDuration,
     this.durationTextStyle = const TextStyle(color: Colors.white),
     this.durationStyle = DurationStyle.FORMAT_HH_MM_SS,
     this.onChangeStart,

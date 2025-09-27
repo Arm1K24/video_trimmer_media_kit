@@ -192,28 +192,31 @@ class TrimViewer extends StatefulWidget {
 
 class _TrimViewerState extends State<TrimViewer> with TickerProviderStateMixin {
   bool? _isScrollableAllowed;
-
+  Duration totalDuration = Duration.zero;
   @override
   void initState() {
     super.initState();
-    widget.trimmer.eventStream.listen((event) {
+    widget.trimmer.eventStream.listen((event) async {
       if (event == TrimmerEvent.initialized) {
-        final totalDuration =
-            widget.trimmer.videoPlayerController!.player.state.duration;
-        final maxVideoLength = widget.maxVideoLength;
-        final paddingFraction = widget.paddingFraction;
-        final trimAreaDuration = Duration(
-            milliseconds: (maxVideoLength.inMilliseconds +
-                ((paddingFraction * maxVideoLength.inMilliseconds) * 2)
-                    .toInt()));
+        widget.trimmer.videoPlayerController!.player.stream.duration
+            .distinct()
+            .listen((d) {
+          totalDuration = d;
+          final maxVideoLength = widget.maxVideoLength;
+          final paddingFraction = widget.paddingFraction;
+          final trimAreaDuration = Duration(
+              milliseconds: (maxVideoLength.inMilliseconds +
+                  ((paddingFraction * maxVideoLength.inMilliseconds) * 2)
+                      .toInt()));
 
-        final shouldScroll = trimAreaDuration <= totalDuration &&
-            maxVideoLength.compareTo(const Duration(milliseconds: 0)) != 0;
-        if (widget.type == ViewerType.scrollable && !shouldScroll) {
-          throw 'Total video duration is less than maxVideoLength + padding. '
-              'Can\'t use `ScrollableTrimViewer`. Change the type to `ViewerType.auto`.';
-        }
-        setState(() => _isScrollableAllowed = shouldScroll);
+          final shouldScroll = trimAreaDuration <= totalDuration &&
+              maxVideoLength.compareTo(const Duration(milliseconds: 0)) != 0;
+          if (widget.type == ViewerType.scrollable && !shouldScroll) {
+            throw 'Total video duration is less than maxVideoLength + padding. '
+                'Can\'t use `ScrollableTrimViewer`. Change the type to `ViewerType.auto`.';
+          }
+          setState(() => _isScrollableAllowed = shouldScroll);
+        });
       }
     });
   }
@@ -226,6 +229,7 @@ class _TrimViewerState extends State<TrimViewer> with TickerProviderStateMixin {
       viewerWidth: widget.viewerWidth,
       viewerHeight: widget.viewerHeight,
       showDuration: widget.showDuration,
+      totalDuration: totalDuration,
       durationTextStyle: widget.durationTextStyle,
       durationStyle: widget.durationStyle,
       onChangeStart: widget.onChangeStart,
@@ -247,6 +251,7 @@ class _TrimViewerState extends State<TrimViewer> with TickerProviderStateMixin {
       viewerWidth: widget.viewerWidth,
       viewerHeight: widget.viewerHeight,
       showDuration: widget.showDuration,
+      totalDuration: totalDuration,
       durationTextStyle: widget.durationTextStyle,
       durationStyle: widget.durationStyle,
       onChangeStart: widget.onChangeStart,
