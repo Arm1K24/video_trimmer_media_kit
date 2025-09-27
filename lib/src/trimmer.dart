@@ -34,9 +34,9 @@ class Trimmer {
   final StreamController<TrimmerEvent> _controller =
       StreamController<TrimmerEvent>.broadcast();
 
-  late VideoController _videoPlayerController;
+  VideoController? _videoPlayerController;
 
-  VideoController get videoPlayerController => _videoPlayerController;
+  VideoController? get videoPlayerController => _videoPlayerController;
 
   final ValueNotifier<bool> playingNotifier = ValueNotifier(false);
 

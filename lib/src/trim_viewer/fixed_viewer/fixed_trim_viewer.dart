@@ -174,7 +174,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
 
   /// Quick access to VideoPlayerController, only not null after [TrimmerEvent.initialized]
   /// has been emitted.
-  VideoController get videoPlayerController =>
+  VideoController? get videoPlayerController =>
       widget.trimmer.videoPlayerController;
 
   /// Keep track of the drag type, e.g. whether the user drags the left, center or
@@ -266,9 +266,9 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
   }
 
   Future<void> _initializeVideoController() async {
-    if (_videoFile != null) {
-      videoPlayerController?.player.stream.position.listen((pos) {
-        final bool isPlaying = videoPlayerController.player.state.playing;
+    if (_videoFile != null && videoPlayerController != null) {
+      videoPlayerController!.player.stream.position.listen((pos) {
+        final bool isPlaying = videoPlayerController!.player.state.playing;
 
         if (isPlaying) {
           widget.onChangePlaybackState!(true);
@@ -276,7 +276,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
             _currentPosition = pos.inMilliseconds;
 
             if (_currentPosition > _videoEndPos.toInt()) {
-              videoPlayerController.player.pause();
+              videoPlayerController!.player.pause();
               widget.onChangePlaybackState!(false);
               _animationController!.stop();
             } else {
@@ -298,9 +298,9 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
         }
       });
 
-      videoPlayerController.player.setVolume(1.0);
+      videoPlayerController!.player.setVolume(1.0);
       _videoDuration =
-          videoPlayerController.player.state.duration.inMilliseconds;
+          videoPlayerController!.player.state.duration.inMilliseconds;
     }
   }
 
@@ -400,10 +400,10 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       _startCircleSize = widget.editorProperties.circleSize;
       _endCircleSize = widget.editorProperties.circleSize;
       if (_dragType == EditorDragType.right) {
-        videoPlayerController.player
+        videoPlayerController?.player
             .seek(Duration(milliseconds: _videoEndPos.toInt()));
       } else {
-        videoPlayerController.player
+        videoPlayerController?.player
             .seek(Duration(milliseconds: _videoStartPos.toInt()));
       }
     });
@@ -411,11 +411,11 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
 
   @override
   void dispose() {
-    videoPlayerController.player.pause();
+    videoPlayerController?.player.pause();
     widget.onChangePlaybackState!(false);
     if (_videoFile != null) {
-      videoPlayerController.player.setVolume(0.0);
-      videoPlayerController.player.dispose();
+      videoPlayerController?.player.setVolume(0.0);
+      videoPlayerController?.player.dispose();
       widget.onChangePlaybackState!(false);
     }
     super.dispose();
@@ -444,7 +444,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
                               .format(widget.durationStyle),
                           style: widget.durationTextStyle,
                         ),
-                        videoPlayerController.player.state.playing
+                        videoPlayerController?.player.state.playing == true
                             ? Text(
                                 Duration(milliseconds: _currentPosition.toInt())
                                     .format(widget.durationStyle),
