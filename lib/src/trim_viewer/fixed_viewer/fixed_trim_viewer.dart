@@ -175,7 +175,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
   /// Quick access to VideoPlayerController, only not null after [TrimmerEvent.initialized]
   /// has been emitted.
   VideoController get videoPlayerController =>
-      widget.trimmer.videoPlayerController!;
+      widget.trimmer.videoPlayerController;
 
   /// Keep track of the drag type, e.g. whether the user drags the left, center or
   /// right part of the frame. Set this in [_onDragStart] when the dragging starts.
@@ -201,7 +201,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
       if (trimmerActualWidth == null) return;
       _thumbnailViewerW = trimmerActualWidth;
       _initializeVideoController();
-      videoPlayerController.player.seek(const Duration(milliseconds: 0));
+      videoPlayerController?.player.seek(const Duration(milliseconds: 0));
       _numberOfThumbnails = trimmerActualWidth ~/ _thumbnailViewerH;
       log('numberOfThumbnails: $_numberOfThumbnails');
       log('thumbnailViewerW: $_thumbnailViewerW');
@@ -218,7 +218,8 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
           onThumbnailLoadingComplete: widget.onThumbnailLoadingComplete,
         );
         this.thumbnailWidget = thumbnailWidget;
-        Duration totalDuration = videoPlayerController.player.state.duration;
+        Duration totalDuration =
+            videoPlayerController?.player.state.duration ?? Duration.zero;
 
         if (widget.maxVideoLength > const Duration(milliseconds: 0) &&
             widget.maxVideoLength < totalDuration) {
@@ -266,7 +267,7 @@ class _FixedTrimViewerState extends State<FixedTrimViewer>
 
   Future<void> _initializeVideoController() async {
     if (_videoFile != null) {
-      videoPlayerController.player.stream.position.listen((pos) {
+      videoPlayerController?.player.stream.position.listen((pos) {
         final bool isPlaying = videoPlayerController.player.state.playing;
 
         if (isPlaying) {
