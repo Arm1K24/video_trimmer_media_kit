@@ -26,6 +26,11 @@ enum TrimmerEvent { initialized }
 /// - [saveTrimmedVideo()]
 /// - [videoPlaybackControl()]
 class Trimmer {
+  Trimmer() {
+    player = Player();
+    _videoPlayerController = VideoController(player);
+  }
+
   final StreamController<TrimmerEvent> _controller =
       StreamController<TrimmerEvent>.broadcast();
 
@@ -37,7 +42,7 @@ class Trimmer {
 
   File? currentVideoFile;
 
-  Player player = Player();
+  late Player player;
 
   final _videoTrimmer = VideoTrimmer();
 
@@ -50,9 +55,7 @@ class Trimmer {
   Future<void> loadVideo({required File videoFile}) async {
     currentVideoFile = videoFile;
     if (videoFile.existsSync()) {
-      player = Player();
       await player.open(Media(currentVideoFile!.path));
-      _videoPlayerController = VideoController(player);
       player.stream.playing.listen((playing) {
         playingNotifier.value = playing;
       });
