@@ -1,9 +1,13 @@
 import 'dart:developer';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:get_thumbnail_video/index.dart';
-import 'package:get_thumbnail_video/video_thumbnail.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+
+// import 'package:get_thumbnail_video/index.dart';
+// import 'package:get_thumbnail_video/video_thumbnail.dart';
 
 /// Formats a [Duration] object to a human-readable string.
 ///
@@ -86,13 +90,18 @@ Stream<List<Uint8List?>> generateThumbnail({
           _formatDuration(Duration(milliseconds: timestamp));
 
       // Generate the thumbnail image bytes
-      bytes = await VideoThumbnail.thumbnailData(
+      final file = (await VideoThumbnail.thumbnailFile(
         video: videoPath,
-        imageFormat: ImageFormat.JPEG,
+        thumbnailPath: '${(await getTemporaryDirectory()).path}/thumbnail',
         timeMs: timestamp,
-        maxHeight: thumbnailHeight.toInt(),
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: thumbnailHeight.toInt(),
+        // maxHeight:
+        //     200, // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
         quality: quality,
-      );
+      ));
+      if (file == null) continue;
+      bytes = File(file).readAsBytesSync();
 
       log('Timestamp: $formattedTimestamp | Size: ${(bytes.length / 1000).toStringAsFixed(2)} kB');
       log('---------------------------------');

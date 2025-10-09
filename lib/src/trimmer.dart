@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:flutter_native_video_trimmer/flutter_native_video_trimmer.dart';
-import 'package:get_thumbnail_video/index.dart';
-import 'package:get_thumbnail_video/video_thumbnail.dart';
+// import 'package:get_thumbnail_video/index.dart';
+// import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:path/path.dart';
@@ -12,6 +12,7 @@ import 'package:path/path.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 import 'package:video_trimmer/src/utils/storage_dir.dart';
 
@@ -134,15 +135,26 @@ class Trimmer {
         timeMs <= endValue.toInt();
         timeMs += frameIntervalMs) {
       try {
-        final thumbnail = await VideoThumbnail.thumbnailData(
+        final thumbnail = await VideoThumbnail.thumbnailFile(
           video: videoPath,
-          imageFormat: ImageFormat.JPEG,
+          thumbnailPath: '${(await getTemporaryDirectory()).path}/thumbnail',
           timeMs: timeMs,
+          imageFormat: ImageFormat.JPEG,
           maxWidth: scaleGIF,
+          // maxHeight:
+          //     200, // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
           quality: qualityGIF,
         );
 
-        thumbnails.add(thumbnail);
+        // VideoThumbnail.thumbnailData(
+        //   video: videoPath,
+        //   imageFormat: ImageFormat.JPEG,
+        //   timeMs: timeMs,
+        //   maxWidth: scaleGIF,
+        //   quality: qualityGIF,
+        // );
+        if (thumbnail == null) continue;
+        thumbnails.add(File(thumbnail).readAsBytesSync());
       } catch (e) {
         debugPrint('Error generating thumbnail at ${timeMs}ms: $e');
       }
