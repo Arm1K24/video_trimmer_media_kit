@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
-import 'package:flutter_native_video_trimmer/flutter_native_video_trimmer.dart';
+// import 'package:flutter_native_video_trimmer/flutter_native_video_trimmer.dart';
 // import 'package:get_thumbnail_video/index.dart';
 // import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:media_kit/media_kit.dart';
@@ -45,7 +45,7 @@ class Trimmer {
 
   late Player player;
 
-  final _videoTrimmer = VideoTrimmer();
+  // final _videoTrimmer = VideoTrimmer();
 
   /// Listen to this stream to catch the events
   Stream<TrimmerEvent> get eventStream => _controller.stream;
@@ -342,17 +342,17 @@ class Trimmer {
 
       onSave(gifPath);
     } else {
-      await _videoTrimmer.loadVideo(currentVideoFile!.path);
+      // await _videoTrimmer.loadVideo(currentVideoFile!.path);
 
-      // Trim the video
-      final trimmedPath = await _videoTrimmer.trimVideo(
-        startTimeMs: startValue.toInt(),
-        endTimeMs: endValue.toInt(),
-      );
+      // // Trim the video
+      // final trimmedPath = await _videoTrimmer.trimVideo(
+      //   startTimeMs: startValue.toInt(),
+      //   endTimeMs: endValue.toInt(),
+      // );
 
       // Copy the trimmed video to the output path
-      await File(trimmedPath!).copy(outputPath);
-      onSave(outputPath);
+      // await File(trimmedPath!).copy(outputPath);
+      // onSave(outputPath);
     }
   }
 
